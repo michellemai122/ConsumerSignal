@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ConsumerSignal — Startup Momentum</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --surface-2: #f4f5f7;
+      --border: #e7e9ee;
+      --border-strong: #d5d8e0;
+      --ink: #12141a;
+      --ink-2: #4a5060;
+      --ink-3: #868da0;
+      --accent: #4f46e5;
+      --accent-weak: #eef0fe;
+      --accent-ink: #4338ca;
+      --good: #0f9d58; --good-bg: #e6f6ec;
+      --warn: #b7791f; --warn-bg: #fdf3e0;
+      --bad:  #d1495b; --bad-bg:  #fbe9ec;
+      --shadow: 0 1px 2px rgba(16,20,40,.04), 0 6px 20px rgba(16,20,40,.06);
+      --radius: 14px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d0f14;
+        --surface: #161922;
+        --surface-2: #1e222d;
+        --border: #262b38;
+        --border-strong: #333a4b;
+        --ink: #eef0f5;
+        --ink-2: #aab2c5;
+        --ink-3: #7b8399;
+        --accent: #8b83ff;
+        --accent-weak: #211f3a;
+        --accent-ink: #b7b1ff;
+        --good: #4ade80; --good-bg: #10281b;
+        --warn: #fbbf51; --warn-bg: #2c2110;
+        --bad:  #f4788a; --bad-bg:  #2c1319;
+        --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.35);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+    }
+    .container { max-width: 1180px; margin: 0 auto; padding: 32px 24px 64px; }
+
+    /* Header */
+    .header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .brand {
+      font-size: 26px; font-weight: 800; letter-spacing: -.02em; margin: 0;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .brand .dot {
+      width: 11px; height: 11px; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 0 4px var(--accent-weak);
+    }
+    .tagline { color: var(--ink-3); font-size: 14px; margin: 6px 0 0; }
+
+    /* KPI strip */
+    .kpis {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+      margin: 22px 0 24px;
+    }
+    .kpi {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow);
+    }
+    .kpi .label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+    .kpi .value { font-size: 24px; font-weight: 800; letter-spacing: -.02em; margin-top: 6px; }
+    .kpi .value small { font-size: 13px; font-weight: 600; color: var(--ink-3); }
+
+    /* Toolbar */
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    .field { position: relative; flex: 1 1 220px; }
+    .field svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--ink-3); pointer-events: none; }
+    input, select, button {
+      font: inherit; font-size: 14px; color: var(--ink);
+      border: 1px solid var(--border-strong); border-radius: 10px;
+      background: var(--surface); padding: 11px 12px; height: 44px;
+    }
+    input { width: 100%; padding-left: 38px; }
+    select { flex: 0 0 auto; min-width: 170px; cursor: pointer; }
+    input::placeholder { color: var(--ink-3); }
+    input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-weak); }
+    button.refresh {
+      cursor: pointer; font-weight: 600; color: var(--accent-ink);
+      background: var(--accent-weak); border-color: transparent; display: flex; align-items: center; gap: 7px;
+    }
+    button.refresh:hover { filter: brightness(.97); }
+    button.refresh:active { transform: translateY(1px); }
+
+    /* Layout */
+    .layout { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; align-items: start; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .panel-head { display: flex; align-items: baseline; justify-content: space-between; padding: 18px 20px 12px; }
+    .panel-head h2 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+    .panel-head .count { font-size: 13px; color: var(--ink-3); }
+    .list { padding: 6px 12px 14px; display: grid; gap: 6px; }
+
+    /* Startup row */
+    .row {
+      display: grid; grid-template-columns: 30px 1fr auto; gap: 14px; align-items: center;
+      padding: 13px 12px; border-radius: 12px; cursor: pointer;
+      border: 1px solid transparent; transition: background .12s ease, border-color .12s ease;
+    }
+    .row:hover { background: var(--surface-2); }
+    .row.active { background: var(--accent-weak); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+    .rank { font-size: 13px; font-weight: 700; color: var(--ink-3); text-align: center; font-variant-numeric: tabular-nums; }
+    .row.active .rank, .rank.top { color: var(--accent); }
+    .r-main { min-width: 0; }
+    .r-name { font-weight: 700; font-size: 15px; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; }
+    .r-sub { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+    .chip {
+      font-size: 11px; font-weight: 600; color: var(--ink-2);
+      background: var(--surface-2); border: 1px solid var(--border);
+      padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+    }
+    .r-desc { color: var(--ink-3); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .r-score { text-align: right; min-width: 92px; }
+    .r-score .num { font-size: 20px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+    .bar { height: 5px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-top: 5px; }
+    .bar > span { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+
+    /* Confidence dot + badge */
+    .cdot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+    .cdot.high { background: var(--good); } .cdot.medium { background: var(--warn); } .cdot.low { background: var(--bad); }
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .badge.high { background: var(--good-bg); color: var(--good); }
+    .badge.medium { background: var(--warn-bg); color: var(--warn); }
+    .badge.low { background: var(--bad-bg); color: var(--bad); }
+
+    /* Detail panel */
+    #detailPanel { padding: 20px; }
+    .detail-sticky { position: sticky; top: 20px; }
+    .d-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+    .d-name { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+    .d-score { text-align: right; flex: none; }
+    .d-score .num { font-size: 40px; font-weight: 800; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+    .d-score .lbl { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; margin-top: 4px; }
+    .d-desc { color: var(--ink-2); margin: 14px 0 4px; }
+    .d-note { font-size: 12px; color: var(--ink-3); margin-top: 8px; }
+
+    .components { display: grid; gap: 14px; margin: 20px 0 4px; }
+    .comp .comp-top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+    .comp .comp-top .k { color: var(--ink-2); font-weight: 600; }
+    .comp .comp-top .v { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .comp .bar { height: 8px; }
+
+    .section { margin-top: 24px; }
+    .section h3 { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 10px; font-weight: 700; }
+    .drow { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+    .drow:last-child { border-bottom: none; }
+    .drow .k { color: var(--ink-3); }
+    .drow .v { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .trend-up { color: var(--good); font-weight: 700; }
+    .trend-down { color: var(--bad); font-weight: 700; }
+
+    .peers { display: grid; gap: 6px; }
+    .peer { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 10px; }
+    .peer.self { background: var(--accent-weak); border-color: color-mix(in srgb, var(--accent) 25%, transparent); }
+    .peer .pn { font-size: 13.5px; font-weight: 600; }
+    .peer .pv { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    .empty { color: var(--ink-3); padding: 28px 4px; text-align: center; }
+    .error { color: var(--bad); font-weight: 600; padding: 12px 0; }
+    .skeleton { color: var(--ink-3); padding: 24px 4px; text-align: center; }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: repeat(2, 1fr); }
+      .detail-sticky { position: static; }
+      .r-desc { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div>
+        <h1 class="brand"><span class="dot"></span>ConsumerSignal</h1>
+        <p class="tagline">Which consumer startups are gaining momentum right now — ranked from live search &amp; news signals.</p>
+      </div>
+    </header>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div class="toolbar">
+      <div class="field">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input id="searchInput" type="text" placeholder="Search startups…" />
+      </div>
+      <select id="categoryFilter"><option value="">All categories</option></select>
+      <button class="refresh" id="refreshBtn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+        Refresh
+      </button>
+    </div>
+
+    <div class="layout">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Momentum Leaderboard</h2>
+          <span class="count" id="listMeta"></span>
+        </div>
+        <div id="startupList" class="list"></div>
+      </div>
+
+      <div class="panel">
+        <div id="detailPanel" class="empty">Select a startup to see its momentum breakdown.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allStartups = [];
+    let activeName = null;
+
+    // When opened directly from disk (file://) there's no server at the page's
+    // origin, so point API calls at the local Flask server instead.
+    const API_BASE = location.protocol === "file:" ? "http://127.0.0.1:5000" : "";
+
+    function safeNumber(value, digits = 1) {
+      if (value === null || value === undefined || value === "") return "N/A";
+      const num = Number(value);
+      if (Number.isNaN(num)) return "N/A";
+      return num.toFixed(digits);
+    }
+    function safeInt(value) {
+      if (value === null || value === undefined || value === "") return "N/A";
+      const num = Number(value);
+      if (Number.isNaN(num)) return "N/A";
+      return String(Math.round(num));
+    }
+    function confidenceClass(flag) {
+      if (!flag) return "low";
+      const val = flag.toLowerCase();
+      if (val === "high") return "high";
+      if (val === "medium") return "medium";
+      return "low";
+    }
+    function clampPct(v) {
+      const n = Number(v);
+      if (Number.isNaN(n)) return 0;
+      return Math.max(0, Math.min(100, n));
+    }
+
+    async function fetchJSON(url) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+      return res.json();
+    }
+
+    function renderKpis(startups) {
+      const el = document.getElementById("kpis");
+      const scored = startups.filter(s => s.momentum_score != null);
+      const avg = scored.length ? scored.reduce((a, s) => a + Number(s.momentum_score), 0) / scored.length : null;
+      const leader = scored.slice().sort((a, b) => b.momentum_score - a.momentum_score)[0];
+      const categories = new Set(startups.map(s => s.category).filter(Boolean));
+      const highConf = startups.filter(s => (s.confidence_flag || "").toLowerCase() === "high").length;
+
+      const cards = [
+        { label: "Startups tracked", value: String(startups.length) },
+        { label: "Avg momentum", value: avg == null ? "—" : avg.toFixed(1) },
+        { label: "Momentum leader", value: leader ? `${leader.startup_name} <small>${safeNumber(leader.momentum_score,1)}</small>` : "—" },
+        { label: "Categories", value: `${categories.size} <small>· ${highConf} high-conf</small>` },
+      ];
+      el.innerHTML = cards.map(c => `<div class="kpi"><div class="label">${c.label}</div><div class="value">${c.value}</div></div>`).join("");
+    }
+
+    function populateCategoryFilter(startups) {
+      const select = document.getElementById("categoryFilter");
+      const categories = [...new Set(startups.map(s => s.category).filter(Boolean))].sort();
+      const current = select.value;
+      select.innerHTML = `<option value="">All categories</option>`;
+      for (const category of categories) {
+        const option = document.createElement("option");
+        option.value = category; option.textContent = category;
+        select.appendChild(option);
+      }
+      select.value = current;
+    }
+
+    function renderStartupList() {
+      const container = document.getElementById("startupList");
+      const meta = document.getElementById("listMeta");
+      const search = document.getElementById("searchInput").value.trim().toLowerCase();
+      const category = document.getElementById("categoryFilter").value;
+
+      let filtered = allStartups.filter(item => {
+        const matchesSearch = !search ||
+          (item.startup_name || "").toLowerCase().includes(search) ||
+          (item.description || "").toLowerCase().includes(search);
+        const matchesCategory = !category || item.category === category;
+        return matchesSearch && matchesCategory;
+      });
+
+      meta.textContent = `${filtered.length} shown`;
+      if (!filtered.length) {
+        container.innerHTML = `<div class="empty">No startups match your filters.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map((item, i) => {
+        const rank = i + 1;
+        const conf = confidenceClass(item.confidence_flag);
+        const isActive = item.startup_name === activeName;
+        const pct = clampPct(item.momentum_score);
+        return `
+        <div class="row ${isActive ? "active" : ""}" onclick="loadStartupDetail('${encodeURIComponent(item.startup_name)}')">
+          <div class="rank ${rank <= 3 ? "top" : ""}">${rank}</div>
+          <div class="r-main">
+            <div class="r-name">${item.startup_name || "Unknown"} <span class="cdot ${conf}" title="${item.confidence_flag || "Unknown"} confidence"></span></div>
+            <div class="r-sub">
+              <span class="chip">${item.category || "Uncategorized"}</span>
+              <span class="r-desc">${item.description || ""}</span>
+            </div>
+          </div>
+          <div class="r-score">
+            <div class="num">${safeNumber(item.momentum_score, 1)}</div>
+            <div class="bar"><span style="width:${pct}%"></span></div>
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    async function loadStartups() {
+      const container = document.getElementById("startupList");
+      container.innerHTML = `<div class="skeleton">Loading momentum data…</div>`;
+      try {
+        allStartups = await fetchJSON(`${API_BASE}/api/startups`);
+        renderKpis(allStartups);
+        populateCategoryFilter(allStartups);
+        renderStartupList();
+        if (allStartups.length > 0) loadStartupDetail(encodeURIComponent(allStartups[0].startup_name));
+      } catch (err) {
+        container.innerHTML = `<div class="error">Could not load startups: ${err.message}</div>`;
+      }
+    }
+
+    function componentBar(label, value) {
+      const pct = clampPct(value);
+      return `
+        <div class="comp">
+          <div class="comp-top"><span class="k">${label}</span><span class="v">${safeNumber(value, 1)}</span></div>
+          <div class="bar"><span style="width:${pct}%"></span></div>
+        </div>`;
+    }
+
+    function growthCell(value) {
+      if (value === null || value === undefined || value === "") return `<span class="v">N/A</span>`;
+      const n = Number(value);
+      if (Number.isNaN(n)) return `<span class="v">N/A</span>`;
+      const cls = n > 0 ? "trend-up" : n < 0 ? "trend-down" : "v";
+      const arrow = n > 0 ? "▲ " : n < 0 ? "▼ " : "";
+      return `<span class="${cls}">${arrow}${safeNumber(Math.abs(n), 1)}%</span>`;
+    }
+
+    async function loadStartupDetail(encodedName) {
+      const panel = document.getElementById("detailPanel");
+      panel.className = "";
+      panel.innerHTML = `<div class="skeleton">Loading details…</div>`;
+      try {
+        const data = await fetchJSON(`${API_BASE}/api/startup/${encodedName}`);
+        const startup = data.startup || {};
+        const score = data.scorecard || {};
+        const trend = data.trend_signals || {};
+        const news = data.news_signals || {};
+        const reddit = data.reddit_signals || {};
+        const peers = Array.isArray(data.peers) ? data.peers : [];
+        const conf = confidenceClass(score.confidence_flag);
+
+        activeName = startup.startup_name || null;
+        renderStartupList();
+
+        panel.innerHTML = `
+          <div class="detail-sticky">
+            <div class="d-head">
+              <div>
+                <div class="d-name">${startup.startup_name || "Unknown Startup"}</div>
+                <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+                  <span class="chip">${startup.category || "Uncategorized"}</span>
+                  <span class="badge ${conf}"><span class="cdot ${conf}"></span>${score.confidence_flag || "Unknown"} confidence</span>
+                </div>
+              </div>
+              <div class="d-score">
+                <div class="num">${safeNumber(score.momentum_score, 1)}</div>
+                <div class="lbl">Momentum</div>
+              </div>
+            </div>
+
+            <p class="d-desc">${startup.description || "No description available."}</p>
+
+            <div class="components">
+              ${componentBar("Awareness", score.awareness_score)}
+              ${componentBar("Growth", score.growth_score)}
+              ${componentBar("Engagement", score.engagement_score)}
+              ${componentBar("Media", score.media_score)}
+            </div>
+            <div class="d-note">Component and momentum scores are normalized 0–100 relative to all tracked startups.</div>
+
+            <div class="section">
+              <h3>Source Signals</h3>
+              <div class="drow"><span class="k">Search interest</span><span class="v">${safeNumber(trend.search_interest, 1)}</span></div>
+              <div class="drow"><span class="k">Search growth (30d)</span>${growthCell(trend.search_growth_30d)}</div>
+              <div class="drow"><span class="k">News articles</span><span class="v">${safeInt(news.article_count)}</span></div>
+              <div class="drow"><span class="k">Reddit mentions</span><span class="v">${safeInt(reddit.mentions)}</span></div>
+              <div class="drow"><span class="k">Last updated</span><span class="v">${score.score_date || trend.signal_date || "N/A"}</span></div>
+            </div>
+
+            <div class="section">
+              <h3>Peers in ${startup.category || "category"}</h3>
+              ${peers.length
+                ? `<div class="peers">${peers.map(p => `
+                    <div class="peer ${p.startup_name === startup.startup_name ? "self" : ""}"
+                         onclick="loadStartupDetail('${encodeURIComponent(p.startup_name)}')" style="cursor:pointer;">
+                      <span class="pn">${p.startup_name}</span>
+                      <span class="pv">${safeNumber(p.momentum_score, 1)}</span>
+                    </div>`).join("")}</div>`
+                : `<div class="empty">No peer data available.</div>`}
+            </div>
+          </div>`;
+      } catch (err) {
+        panel.className = "";
+        panel.innerHTML = `<div class="error">Could not load details: ${err.message}</div>`;
+      }
+    }
+
+    document.getElementById("searchInput").addEventListener("input", renderStartupList);
+    document.getElementById("categoryFilter").addEventListener("change", renderStartupList);
+    document.getElementById("refreshBtn").addEventListener("click", loadStartups);
+
+    loadStartups();
+  </script>
+</body>
+</html>

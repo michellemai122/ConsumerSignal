@@ -1,0 +1,16 @@
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Local backups / scratch
+*.bak
+*.save
+edgar_results.csv
+
+# Keep startup_intelligence.db committed (it's the read-only demo dataset)
