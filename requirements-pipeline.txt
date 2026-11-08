@@ -1,0 +1,5 @@
+# Only needed to refresh the data (scripts/run_pipeline.py and the
+# GitHub Actions workflow). The web app needs requirements.txt only.
+pandas>=2.2
+pytrends==4.9.2
+requests>=2.31
