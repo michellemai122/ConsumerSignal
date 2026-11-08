@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS pipeline_runs;
 DROP TABLE IF EXISTS startup_scores;
 DROP TABLE IF EXISTS reddit_signals;
 DROP TABLE IF EXISTS news_signals;
@@ -49,4 +50,13 @@ CREATE TABLE startup_scores (
     momentum_score REAL,
     confidence_flag TEXT,
     FOREIGN KEY (startup_id) REFERENCES startups(startup_id)
+);
+
+-- One row per scripts/run_pipeline.py run. The dashboard shows the latest
+-- successful run_at as "Last updated".
+CREATE TABLE pipeline_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_at TEXT NOT NULL,      -- UTC, ISO 8601
+    status TEXT NOT NULL,      -- ok | partial | failed
+    sources TEXT NOT NULL      -- JSON: per-source status and row counts
 );

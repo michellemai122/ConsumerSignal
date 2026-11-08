@@ -14,7 +14,16 @@ sys.path.append(str(BASE_DIR))
 from app.db import run_query
 
 
-pytrends = TrendReq(hl="en-US", tz=360)
+_pytrends = None
+
+
+def get_pytrends():
+    # Created lazily so a Google Trends outage at import time can't crash
+    # the pipeline; each startup then falls back to the news proxy.
+    global _pytrends
+    if _pytrends is None:
+        _pytrends = TrendReq(hl="en-US", tz=360)
+    return _pytrends
 
 
 def get_startups():
@@ -74,6 +83,7 @@ def fetch_pytrends_data(startup_name):
     """
     Primary method: try Google Trends via pytrends.
     """
+    pytrends = get_pytrends()
     pytrends.build_payload([startup_name], timeframe="today 3-m")
     df = pytrends.interest_over_time()
 
@@ -117,7 +127,8 @@ def fetch_trend_data_for_startup(startup_id, startup_name):
             "startup_id": startup_id,
             "signal_date": datetime.today().strftime("%Y-%m-%d"),
             "search_interest": search_interest,
-            "search_growth_30d": search_growth_30d
+            "search_growth_30d": search_growth_30d,
+            "source": "pytrends"
         }
 
     except Exception as e:
@@ -131,7 +142,8 @@ def fetch_trend_data_for_startup(startup_id, startup_name):
                 "startup_id": startup_id,
                 "signal_date": datetime.today().strftime("%Y-%m-%d"),
                 "search_interest": search_interest,
-                "search_growth_30d": search_growth_30d
+                "search_growth_30d": search_growth_30d,
+                "source": "news_rss_fallback"
             }
 
         except Exception as fallback_error:
@@ -140,9 +152,14 @@ def fetch_trend_data_for_startup(startup_id, startup_name):
 
 
 def save_trend_rows(rows):
-    run_query("DELETE FROM trend_signals", fetch=False)
-
+    # Replace only the startups we fetched this run. A startup whose fetch
+    # failed keeps its previous row instead of dropping out of the scores.
     for row in rows:
+        run_query(
+            "DELETE FROM trend_signals WHERE startup_id = ?",
+            (row["startup_id"],),
+            fetch=False
+        )
         run_query(
             """
             INSERT INTO trend_signals (
@@ -180,9 +197,16 @@ def main():
 
     if trend_rows:
         save_trend_rows(trend_rows)
-        print(f"Inserted {len(trend_rows)} rows into trend_signals.")
+        from_pytrends = sum(1 for r in trend_rows if r["source"] == "pytrends")
+        print(
+            f"Inserted {len(trend_rows)} rows into trend_signals "
+            f"({from_pytrends} from Google Trends, "
+            f"{len(trend_rows) - from_pytrends} from the news fallback)."
+        )
     else:
         print("No trend rows were inserted.")
+
+    return len(trend_rows), len(startups)
 
 
 if __name__ == "__main__":

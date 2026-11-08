@@ -65,6 +65,8 @@
       background: var(--accent); box-shadow: 0 0 0 4px var(--accent-weak);
     }
     .tagline { color: var(--ink-3); font-size: 14px; margin: 6px 0 0; }
+    .updated { color: var(--ink-3); font-size: 12px; margin: 4px 0 0; }
+    .updated:empty { display: none; }
 
     /* KPI strip */
     .kpis {
@@ -189,6 +191,7 @@
       <div>
         <h1 class="brand"><span class="dot"></span>ConsumerSignal</h1>
         <p class="tagline">Which consumer startups are gaining momentum right now — ranked from live search &amp; news signals.</p>
+        <p class="updated" id="lastUpdated"></p>
       </div>
     </header>
 
@@ -333,7 +336,24 @@
       }).join("");
     }
 
+    async function loadLastUpdated() {
+      const el = document.getElementById("lastUpdated");
+      try {
+        const meta = await fetchJSON(`${API_BASE}/api/meta`);
+        if (!meta.last_updated) return;
+        // run_at is a UTC timestamp; older data only has a YYYY-MM-DD score date.
+        const iso = meta.last_updated.length === 10 ? `${meta.last_updated}T12:00:00Z` : meta.last_updated;
+        const when = new Date(iso);
+        if (Number.isNaN(when.getTime())) return;
+        el.textContent = `Last updated ${when.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`;
+        el.title = when.toLocaleString();
+      } catch (err) {
+        el.textContent = "";
+      }
+    }
+
     async function loadStartups() {
+      loadLastUpdated();
       const container = document.getElementById("startupList");
       container.innerHTML = `<div class="skeleton">Loading momentum data…</div>`;
       try {

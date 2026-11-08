@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 import sqlite3
 
@@ -202,6 +203,39 @@ def get_category_comparison(category):
 
     conn.close()
     return jsonify([dict(row) for row in rows])
+
+
+@app.route("/api/meta")
+def get_meta():
+    """When the data was last refreshed, for the dashboard header."""
+    conn = get_connection()
+
+    try:
+        run = conn.execute("""
+            SELECT run_at, status, sources
+            FROM pipeline_runs
+            WHERE status IN ('ok', 'partial')
+            ORDER BY run_at DESC
+            LIMIT 1
+        """).fetchone()
+    except sqlite3.OperationalError:
+        # Older databases have no pipeline_runs table yet.
+        run = None
+
+    if run:
+        result = {
+            "last_updated": run["run_at"],
+            "status": run["status"],
+            "sources": json.loads(run["sources"]),
+        }
+    else:
+        score_date = conn.execute(
+            "SELECT MAX(score_date) AS d FROM startup_scores"
+        ).fetchone()["d"]
+        result = {"last_updated": score_date, "status": None, "sources": None}
+
+    conn.close()
+    return jsonify(result)
 
 
 if __name__ == "__main__":

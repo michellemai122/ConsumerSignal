@@ -54,9 +54,14 @@ def fetch_recent_news_count(startup_name, days_back=7):
 
 
 def save_news_rows(rows):
-    run_query("DELETE FROM news_signals", fetch=False)
-
+    # Replace only the startups we fetched this run. A startup whose fetch
+    # failed keeps its previous row instead of dropping out of the scores.
     for row in rows:
+        run_query(
+            "DELETE FROM news_signals WHERE startup_id = ?",
+            (row["startup_id"],),
+            fetch=False
+        )
         run_query(
             """
             INSERT INTO news_signals (startup_id, signal_date, article_count)
@@ -105,6 +110,8 @@ def main():
     else:
 
         print("No news rows were inserted.")
+
+    return len(news_rows), len(startups)
 
 
 if __name__ == "__main__":
